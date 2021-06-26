@@ -122,7 +122,6 @@ fn separate_body_from_header(request_txt: &str) -> Result<(&str, &str), ServerEr
     Ok((request_header, request_body))
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -181,6 +180,7 @@ mod test {
         assert_eq!(error, ServerErrors::ParseJson { json: String::from("hey") })
     }
 }
+
 /*/*
 GET /test HTTP/1.1
 Host: localhost:8378
