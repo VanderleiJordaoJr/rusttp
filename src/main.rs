@@ -1,3 +1,5 @@
+use rusttp::tcp_server;
+
 fn main() {
-    println!("Hello, world!");
+    tcp_server::test_me();
 }
