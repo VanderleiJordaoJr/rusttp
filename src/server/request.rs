@@ -1,7 +1,6 @@
 use crate::http_enums::RequestMethod;
 use std::collections::HashMap;
 use serde_json::Value;
-
 use crate::server_errors::{Result, ServerErrors};
 use std::fmt;
 
@@ -149,16 +148,42 @@ mod test {
         let error = match Request::from_str(to_parse) {
             Ok(req) => {
                 println!("An error occurred: {}", req);
-                ServerErrors::UnparsedRequest { request: req.path }
+                panic!("{}", req)
             }
             Err(e) => e
         };
-        println!("{}", error);
+        assert_eq!(error, ServerErrors::UnparsedRequest{request: String::from(to_parse)})
+    }
+
+    #[test]
+    fn invalid_method() {
+        let to_parse = "INVALID / HTTP/1.1\r\nHost: localhost:8378\r\nUser-Agent: insomnia/2021.3.0\r\nAccept: */*\r\n\r\n";
+        let error = match Request::from_str(to_parse) {
+            Ok(req) => {
+                println!("An error occurred: {}", req);
+                panic!("{}", req)
+            }
+            Err(e) => e
+        };
+        assert_eq!(error, ServerErrors::HTTPRequest { method: String::from("INVALID") })
+    }
+
+    #[test]
+    fn invalid_json() {
+        let to_parse = "POST / HTTP/1.1\r\nHost: localhost:8378\r\nUser-Agent: insomnia/2021.3.0\r\nAccept: */*\r\n\r\nhey";
+        let error = match Request::from_str(to_parse) {
+            Ok(req) => {
+                println!("An error occurred: {}", req);
+                panic!("{}", req)
+            }
+            Err(e) => e
+        };
+        assert_eq!(error, ServerErrors::ParseJson { json: String::from("hey") })
     }
 }
-
-/*
+/*/*
 GET /test HTTP/1.1
 Host: localhost:8378
 User-Agent: insomnia/2021.3.0
 Accept: */
+*/

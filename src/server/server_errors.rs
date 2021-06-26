@@ -2,7 +2,7 @@ extern crate custom_error;
 
 use custom_error::custom_error;
 
-custom_error! {pub ServerErrors
+custom_error! {#[derive(PartialEq,PartialOrd)] pub ServerErrors
     HTTPHeader { request: String } = "Invalid request header: {request}",
     HTTPRequest { method: String } = "Invalid method: {method}",
     UnparsedRequest { request: String } = "Invalid request: {request}",
