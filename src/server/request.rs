@@ -1,7 +1,7 @@
 use crate::http_enums::RequestMethod;
 use std::collections::HashMap;
 use serde_json::Value;
-use crate::server_errors::{Result, ServerErrors};
+use crate::server_errors::{RequestResult, RequestErrors};
 use std::fmt;
 
 #[derive(Debug)]
@@ -20,10 +20,10 @@ impl fmt::Display for Request {
 }
 
 impl Request {
-    pub fn from_str(request_txt: &str) -> Result<Request, ServerErrors> {
+    pub fn from_str(request_txt: &str) -> RequestResult<Request, RequestErrors> {
         let mut headers: HashMap<String, String> = HashMap::new();
-        let mut header_result: Result<(RequestMethod, String), ServerErrors> = {
-            Err(ServerErrors::UnparsedRequest { request: "".to_string() })
+        let mut header_result: RequestResult<(RequestMethod, String), RequestErrors> = {
+            Err(RequestErrors::UnparsedRequest { request: "".to_string() })
         };
 
         let (raw_headers, raw_body) = match separate_body_from_header(request_txt) {
@@ -40,13 +40,13 @@ impl Request {
             }
         }
 
-        let body_parse_result: Result<Option<Value>, ServerErrors> = match raw_body {
+        let body_parse_result: RequestResult<Option<Value>, RequestErrors> = match raw_body {
             "" => Ok(None),
             json => {
                 match serde_json::from_str(json) {
                     Ok(value) => Ok(Some(value)),
                     Err(_) => {
-                        Err(ServerErrors::ParseJson { json: String::from(json) })
+                        Err(RequestErrors::ParseJson { json: String::from(json) })
                     }
                 }
             }
@@ -79,7 +79,7 @@ impl Request {
     }
 }
 
-fn parse_request_header(header_line: &str) -> Result<(RequestMethod, String), ServerErrors> {
+fn parse_request_header(header_line: &str) -> RequestResult<(RequestMethod, String), RequestErrors> {
     let separated_header: Vec<&str> = header_line.split(" ").collect();
 
     let method_str: &str = match separated_header.get(0) {
@@ -87,7 +87,7 @@ fn parse_request_header(header_line: &str) -> Result<(RequestMethod, String), Se
             path
         }
         None => {
-            return Err(ServerErrors::HTTPHeader { request: String::from(header_line) });
+            return Err(RequestErrors::HTTPHeader { request: String::from(header_line) });
         }
     };
 
@@ -96,27 +96,27 @@ fn parse_request_header(header_line: &str) -> Result<(RequestMethod, String), Se
             path
         }
         None => {
-            return Err(ServerErrors::HTTPHeader { request: String::from(header_line) });
+            return Err(RequestErrors::HTTPHeader { request: String::from(header_line) });
         }
     };
 
     let request_method = match RequestMethod::from_str(method_str) {
         Some(method) => method,
         None => {
-            return Err(ServerErrors::HTTPRequest { method: String::from(method_str) });
+            return Err(RequestErrors::HTTPRequest { method: String::from(method_str) });
         }
     };
 
     Ok((request_method, String::from(path)))
 }
 
-fn separate_body_from_header(request_txt: &str) -> Result<(&str, &str), ServerErrors> {
+fn separate_body_from_header(request_txt: &str) -> RequestResult<(&str, &str), RequestErrors> {
     let separated_vec: Vec<&str> = request_txt.split("\r\n\r\n").collect();
     let request_header = separated_vec[0];
 
     let request_body = match separated_vec.get(1) {
         Some(body) => body,
-        None => return Err(ServerErrors::UnparsedRequest { request: String::from(request_txt) })
+        None => return Err(RequestErrors::UnparsedRequest { request: String::from(request_txt) })
     };
 
     Ok((request_header, request_body))
@@ -151,7 +151,7 @@ mod test {
             }
             Err(e) => e
         };
-        assert_eq!(error, ServerErrors::UnparsedRequest{request: String::from(to_parse)})
+        assert_eq!(error, RequestErrors::UnparsedRequest{request: String::from(to_parse)})
     }
 
     #[test]
@@ -164,7 +164,7 @@ mod test {
             }
             Err(e) => e
         };
-        assert_eq!(error, ServerErrors::HTTPRequest { method: String::from("INVALID") })
+        assert_eq!(error, RequestErrors::HTTPRequest { method: String::from("INVALID") })
     }
 
     #[test]
@@ -177,7 +177,7 @@ mod test {
             }
             Err(e) => e
         };
-        assert_eq!(error, ServerErrors::ParseJson { json: String::from("hey") })
+        assert_eq!(error, RequestErrors::ParseJson { json: String::from("hey") })
     }
 }
 
