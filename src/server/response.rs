@@ -6,12 +6,15 @@ use serde_json::Result as serde_result;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
-
 pub struct Response {
     stream: TcpStream,
 }
 
 impl Response {
+    pub fn new(stream: TcpStream) -> Response {
+        Response {stream}
+    }
+
     pub fn send(&mut self, status_code: ResponseStatusCode) {
         self.send_all(status_code, None, None);
     }
@@ -75,7 +78,6 @@ impl Response {
         to_return
     }
 }
-
 
 #[cfg(test)]
 mod test {

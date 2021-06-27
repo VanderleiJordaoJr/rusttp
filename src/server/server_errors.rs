@@ -16,3 +16,9 @@ custom_error! {pub ResponseErrors
 }
 
 pub type ResponseResult<T, E = ResponseErrors> = std::result::Result<T, E>;
+
+custom_error! {pub ServerErrors
+    FailedToStart = "Error starting the server."
+}
+
+pub type ServerResult<T, E = ServerErrors> = std::result::Result<T, E>;
